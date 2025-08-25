@@ -1,14 +1,119 @@
-"use client";
-import React from 'react'
-import { useState } from 'react';    
- import { Button } from '@/components/ui/button';
- import { ChevronLeft } from 'lucide-react';
+'use client';
 
-const AuthPage = () => {
-    const [isSignUp, setIsSignUp]= useState(true)
-    const toogleForm = ()=>{
-        setIsSignUp(!isSignUp)
+import { useState, useEffect, FormEvent, Suspense } from 'react';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ChevronLeft, Loader2 } from 'lucide-react';
+import { getSignupFormData, handleSignupSubmit } from '@/actions/auth/signup';
+import { getLoginFormData, handleLoginSubmit } from '@/actions/auth/login';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { IAttributes } from 'oneentry/dist/base/utils';
+
+interface SignUpFormData {
+  email: string;
+  password: string;
+  name: string;
+}
+
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+function AuthForm() {
+  const [isSignUp, setIsSignUp] = useState(true);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [formData, setFormData] = useState<IAttributes[]>([]);
+  const [inputValues, setInputValues] = useState<
+    Partial<SignUpFormData & LoginFormData>
+  >({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>('Not valid');
+
+  useEffect(() => {
+    const type = searchParams.get('type');
+    setIsSignUp(type !== 'login');
+  }, [searchParams]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setError(null);
+    const fetchData = isSignUp ? getSignupFormData : getLoginFormData;
+    fetchData()
+      .then((data) => setFormData(data))
+      .catch((err) => setError(`Failed to fetch form data: ${err}`))
+      .finally(() => setIsLoading(false));
+  }, [isSignUp]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setInputValues((prevValues) => ({ ...prevValues, [name]: value }));
+  };
+  
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      if (isSignUp) {
+        console.log('Submitting Sign Up Form:', inputValues);
+
+        if (inputValues.email && inputValues.password && inputValues.name) {
+          const response = await handleSignupSubmit(
+            inputValues as SignUpFormData
+          );
+         
+          if ('identifier' in response) {
+            setInputValues({});
+            setIsSignUp(false);
+            toast('User has been created', {
+              description: 'Please enter your credentials to log in.',
+              duration: 5000,
+            });
+          } else {
+            setError(response.message);
+          }
+        } else {
+          setError('Please fill out all required fields.');
+        }
+      } else {
+        if (inputValues.email && inputValues.password) {
+          const response = await handleLoginSubmit(
+            inputValues as LoginFormData
+          );
+          if (response.message) {
+            setError(response.message);
+          }
+        } else {
+          setError('Please fill out all required fields.');
+        }
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred. Please try again.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  // Toggles between signup and login forms.
+  const toggleForm = () => {
+    setIsSignUp(!isSignUp);
+    setError(null);
+    setInputValues({});
+  };
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-red-50/30 via-orange-50/20 to-yellow-50/30 dark:from-red-950/10 dark:via-orange-950/10 dark:to-yellow-950/10'>
       {/* Background pattern */}
@@ -19,7 +124,7 @@ const AuthPage = () => {
           {/* Back button */}
           <div
             className='mb-4 xs:mb-5 sm:mb-6 lg:mb-8 cursor-pointer inline-flex items-center justify-center w-9 h-9 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-xl xs:rounded-2xl bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-all duration-200 hover:scale-105 active:scale-[0.95]'
-            // onClick={() => router.push('/')}
+            onClick={() => router.push('/')}
           >
             <ChevronLeft className='text-orange-600 dark:text-orange-400 h-4 w-4 xs:h-5 xs:w-5 sm:h-6 sm:w-6' />
           </div>
@@ -46,7 +151,7 @@ const AuthPage = () => {
 
           {/* Form and loading */}
 
-          {/* {isLoading ? (
+          {isLoading ? (
             <div className='flex flex-col justify-center items-center h-48 xs:h-56 sm:h-64 space-y-3 xs:space-y-4'>
               <div className='w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 rounded-xl xs:rounded-2xl bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 flex items-center justify-center'>
                 <Loader2 className='h-6 w-6 xs:h-7 xs:w-7 sm:h-8 sm:w-8 animate-spin text-white' />
@@ -114,7 +219,7 @@ const AuthPage = () => {
                 </Button>
               </div>
             </form>
-          )} */}
+          )}
 
           {/* Toggle form */}
           <div className='mt-6 xs:mt-7 sm:mt-8 flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-2 px-2'>
@@ -126,7 +231,7 @@ const AuthPage = () => {
             <Button
               variant='link'
               className='text-base xs:text-lg sm:text-xl font-bold bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent hover:from-red-700 hover:via-orange-600 hover:to-yellow-600 transition-all duration-200 p-0 h-auto cursor-pointer active:scale-[0.95]'
-              onClick={toogleForm}
+              onClick={toggleForm}
             >
               {isSignUp ? 'Sign in here' : 'Join us today'}
             </Button>
@@ -137,4 +242,10 @@ const AuthPage = () => {
   );
 }
 
-export default AuthPage
+export default function Component() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthForm />
+    </Suspense>
+  );
+}
