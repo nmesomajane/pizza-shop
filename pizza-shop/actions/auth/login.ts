@@ -17,7 +17,7 @@ export const getLoginFormData = async (): Promise<IAttributes[]> => {
      const apiClient = await fetchApiClient();
 
 
-        const response = await apiClient?.Forms.getFormByMarker('users','en-US')
+        const response = await apiClient?.Forms.getFormByMarker('users','en_US')
         const filteredAttributes= response?.attributes?.filter((attr:IAttributes)=>attr.marker !=='name')
         return filteredAttributes as unknown as IAttributes[];
     } catch (error: any) {

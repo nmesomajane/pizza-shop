@@ -37,21 +37,13 @@ export const handleSignupSubmit = async (inputValues: {
     };
 
     const value = await apiClient?.AuthProvider.signUp('email', data);
-    
-    // FIX: Always return something - never undefined
-    if (!value) {
-      return { message: 'Signup failed - no response from server' };
-    }
-    
     return value;
-    
   } catch (error: any) {
     console.error(error);
     if (error?.statusCode === 400) {
       return { message: error?.message };
     }
-    
-    // FIX: Return error object instead of throwing
-    return { message: 'Account Creation Failed. Please try again later.' };
+
+    throw new Error('Account Creation Failed. Please try again later.');
   }
 };
