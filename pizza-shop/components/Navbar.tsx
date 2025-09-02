@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ModeToggle } from '@/components/ui/mode-toggle';
 import { ShoppingCart, User, Menu, X, LogOut, Search } from 'lucide-react';
 import {
   DropdownMenu,
@@ -133,12 +134,15 @@ export default function Navbar() {
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
         <div className='flex items-center justify-between h-20'>
           {/* Logo Section */}
-          <div className='flex items-center'>
+          <div className='flex items-center gap-3'>
             <Link href='/' className='flex-shrink-0 group'>
               <span className='text-3xl font-black bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 bg-clip-text text-transparent hover:from-red-700 hover:via-orange-600 hover:to-yellow-600 transition-all duration-300 tracking-tight'>
-                🍕 SahandPizza
+                🍕OvenFresh Pizza
               </span>
             </Link>
+            <div className='rounded-xl gap-19 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 from-red-600 md:hidden'>
+              <ModeToggle/>
+            </div>
           </div>
 
           {/* Desktop Navigation */}
@@ -263,6 +267,10 @@ export default function Navbar() {
                     Order Now! 🍕
                   </Button>
                 </Link>
+                <div className=' rounded-xl gap-19 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 from-red-600 '>
+                  <ModeToggle />
+                </div>
+                
               </div>
             )}
           </div>
@@ -405,6 +413,7 @@ export default function Navbar() {
                 >
                   Order Now! 🍕
                 </Link>
+                
               </div>
             )}
           </div>
